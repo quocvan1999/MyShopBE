@@ -11,17 +11,6 @@ export const createToken = (
   });
 };
 
-export const createRefToken = (
-  data: { user_id: number; email: string },
-  secretKey: string,
-  time: string
-) => {
-  return jwt.sign({ payload: data }, secretKey, {
-    algorithm: "HS256",
-    expiresIn: time,
-  });
-};
-
 export const verifyToken = (token: string, secretKey: string) => {
   try {
     jwt.verify(token, secretKey);

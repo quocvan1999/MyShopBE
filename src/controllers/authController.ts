@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
+import { createToken } from "../utils/jwtToken";
 
 const prisma = new PrismaClient();
 
@@ -15,7 +16,7 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (checkEmail) {
-        res.status(400).json({ message: "Email đã tồn tại" });
+        res.status(400).json({ message: "Email đã tồn tại", statusCode: 400 });
         return;
     }
 
@@ -124,7 +125,7 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
 </html>`;
 
     await sendMail(createUser.email, subject, text, html);
-    res.status(200).json({
+    res.status(201).json({
         message: "Đăng ký tài khoản thành công",
         content: {
             id: createUser.user_id,
@@ -135,5 +136,67 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
             role: createUser.role,
             avatar: createUser.avatar_url,
         },
+        statusCode: 201,
     });
+
+    return
+};
+
+export const login = async (req: Request, res: Response): Promise<void> => {
+    const { email, password } = req.body;
+
+    const checkEmail = await prisma.users.findUnique({
+        where: {
+            email,
+        },
+    });
+
+    if (!checkEmail) {
+        res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+        return;
+    }
+
+    const checkPassword = bcrypt.compareSync(password, checkEmail.password);
+
+    if (!checkPassword) {
+        res
+            .status(400)
+            .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
+        return;
+    }
+
+    const accessToken: string = createToken(
+        { email: checkEmail.email, user_id: checkEmail.user_id },
+        `${process.env.SECRET_KEY}`,
+        "1h"
+    );
+
+    const refreshToken: string = createToken(
+        { email: checkEmail.email, user_id: checkEmail.user_id },
+        `${process.env.SECRET_KEY}`,
+        "7d"
+    );
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await prisma.refreshTokens.upsert({
+        where: {
+            user_id: checkEmail.user_id
+        },
+        update: {
+            refresh_token: refreshToken
+        },
+        create: {
+            user_id: checkEmail.user_id,
+            refresh_token: refreshToken,
+            expires_at: expiresAt
+        }
+    })
+
+    res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({ message: "Đăng nhập thành công", accessToken: accessToken, statusCode: 200 })
 };
