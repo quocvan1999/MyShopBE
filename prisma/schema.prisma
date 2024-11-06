@@ -123,13 +123,11 @@ model Products {
 
 model RefreshTokens {
   token_id      Int       @id @default(autoincrement())
-  user_id       Int?      @unique
-  refresh_token String    @db.VarChar(255) @unique
+  user_id       Int?      @unique(map: "user_id")
+  refresh_token String    @unique(map: "refresh_token") @db.VarChar(255)
   created_at    DateTime? @default(now()) @db.Timestamp(0)
   expires_at    DateTime  @db.Timestamp(0)
   Users         Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "RefreshTokens_ibfk_1")
-
-  @@index([user_id], map: "user_id")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -148,22 +146,23 @@ model Reviews {
 }
 
 model Users {
-  user_id        Int              @id @default(autoincrement())
-  username       String           @db.VarChar(255)
-  password       String           @db.VarChar(255)
-  email          String           @unique(map: "email") @db.VarChar(255)
-  phone_number   String?          @db.VarChar(20)
-  address        String?          @db.VarChar(255)
-  created_at     DateTime?        @default(now()) @db.Timestamp(0)
-  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
-  role           String?          @default("user") @db.VarChar(50)
-  avatar_url     String?          @db.VarChar(255)
-  Cart           Cart[]
-  Orders         Orders[]
-  PasswordResets PasswordResets[]
-  RefreshTokens  RefreshTokens[]
-  Reviews        Reviews[]
-  Wishlists      Wishlists[]
+  user_id             Int                  @id @default(autoincrement())
+  username            String               @db.VarChar(255)
+  password            String               @db.VarChar(255)
+  email               String               @unique(map: "email") @db.VarChar(255)
+  phone_number        String?              @db.VarChar(20)
+  address             String?              @db.VarChar(255)
+  created_at          DateTime?            @default(now()) @db.Timestamp(0)
+  updated_at          DateTime?            @default(now()) @db.Timestamp(0)
+  role                String?              @default("user") @db.VarChar(50)
+  avatar_url          String?              @db.VarChar(255)
+  Cart                Cart[]
+  ForgotPasswordCodes ForgotPasswordCodes?
+  Orders              Orders[]
+  PasswordResets      PasswordResets[]
+  RefreshTokens       RefreshTokens?
+  Reviews             Reviews[]
+  Wishlists           Wishlists[]
 }
 
 model Wishlists {
@@ -175,4 +174,14 @@ model Wishlists {
 
   @@index([product_id], map: "product_id")
   @@index([user_id], map: "user_id")
+}
+
+model ForgotPasswordCodes {
+  code_id    Int       @id @default(autoincrement())
+  user_id    Int?      @unique(map: "user_id")
+  code       String    @db.VarChar(10)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  expires_at DateTime  @db.Timestamp(0)
+  used       Boolean?  @default(false)
+  Users      Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "ForgotPasswordCodes_ibfk_1")
 }

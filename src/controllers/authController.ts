@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
 import { createToken, verifyToken } from "../utils/jwtToken";
+import crypto from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -33,7 +34,6 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
   });
 
   const subject = "Đăng ký tài khoản thành công";
-  const text = `Chào ${createUser.username}, cảm ơn bạn đã đăng ký. Tài khoản của bạn đã được tạo thành công.`;
   const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -124,7 +124,7 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
 </body>
 </html>`;
 
-  await sendMail(createUser.email, subject, text, html);
+  await sendMail(createUser.email, subject, html);
   res.status(201).json({
     message: "Đăng ký tài khoản thành công",
     content: {
@@ -196,13 +196,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     sameSite: "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-  res
-    .status(200)
-    .json({
-      message: "Đăng nhập thành công",
-      accessToken: accessToken,
-      statusCode: 200,
-    });
+  res.status(200).json({
+    message: "Đăng nhập thành công",
+    accessToken: accessToken,
+    statusCode: 200,
+  });
 };
 
 export const loginFacebook = async (
@@ -222,7 +220,10 @@ export const loginFacebook = async (
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(`${process.env.FACEBOOK_USER_PASS}`, 10);
+  const hashedPassword = await bcrypt.hash(
+    `${process.env.FACEBOOK_USER_PASS}`,
+    10
+  );
 
   const createUser = await prisma.users.create({
     data: {
@@ -235,7 +236,6 @@ export const loginFacebook = async (
   });
 
   const subject = "Đăng ký tài khoản thành công";
-  const text = `Chào ${createUser.username}, cảm ơn bạn đã đăng ký. Tài khoản của bạn đã được tạo thành công.`;
   const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -326,7 +326,7 @@ export const loginFacebook = async (
 </body>
 </html>`;
 
-  await sendMail(createUser.email, subject, text, html);
+  await sendMail(createUser.email, subject, html);
   res.status(201).json({
     message: "Đăng ký tài khoản thành công",
     content: {
@@ -384,13 +384,121 @@ export const extendToken = async (
         "2h"
       );
 
-      res
-        .status(200)
-        .json({
-          message: "Tạo mới accessToken thành công",
-          accessToken: accessToken,
-          statusCode: 200,
-        });
+      res.status(200).json({
+        message: "Tạo mới accessToken thành công",
+        accessToken: accessToken,
+        statusCode: 200,
+      });
     }
   }
+};
+
+export const forgotPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const code = crypto.randomBytes(3).toString("hex");
+  const expired = new Date(new Date().getTime() + 2 * 60 * 1000);
+
+  await prisma.forgotPasswordCodes.upsert({
+    where: { user_id: checkEmail.user_id },
+    update: {
+      code: code,
+      expires_at: expired,
+    },
+    create: {
+      user_id: checkEmail.user_id,
+      code: code,
+      expires_at: expired,
+    },
+  });
+
+  const subject = "Khôi phục mật khẩu cho tài khoản của bạn";
+  const html = `
+  <!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #dddddd;
+      border-radius: 8px;
+    }
+    .header {
+      text-align: center;
+      padding: 10px 0;
+    }
+    .header h2 {
+      color: #007bff;
+      margin-bottom: 0;
+    }
+    .content {
+      padding: 20px 0;
+    }
+    .code {
+      font-size: 24px;
+      font-weight: bold;
+      color: #007bff;
+      padding: 10px;
+      border: 1px dashed #007bff;
+      display: inline-block;
+      margin: 20px 0;
+    }
+    .footer {
+      text-align: center;
+      color: #888888;
+      font-size: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #dddddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <h2>Khôi phục mật khẩu</h2>
+    </div>
+    <div class="content">
+      <p>Xin chào,</p>
+      <p>Chúng tôi nhận được yêu cầu khôi phục mật khẩu của bạn. Vui lòng sử dụng mã xác nhận dưới đây để hoàn tất quá trình:</p>
+      <div class="code">${code}</div>
+      <p>Mã này có thời hạn trong 2 phút. Nếu bạn không yêu cầu khôi phục mật khẩu, vui lòng bỏ qua email này.</p>
+      <p>Trân trọng,<br>Công ty của bạn</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2024 Công ty của bạn. Mọi quyền được bảo lưu.</p>
+    </div>
+  </div>
+</body>
+</html>
+
+`;
+
+  await sendMail(checkEmail.email, subject, html);
+  res.status(200).json({
+    message: "Gửi mã khôi phục tài khoản thành công",
+    statusCode: 200,
+  });
 };

@@ -6,7 +6,6 @@ dotenv.config();
 export const sendMail = async (
   to: string,
   subject: string,
-  text: string,
   html: string
 ): Promise<boolean> => {
   try {
@@ -22,7 +21,6 @@ export const sendMail = async (
       from: `"My shop" <${process.env.EMAIL_USER}>`,
       to,
       subject,
-      text,
       html,
     };
 
