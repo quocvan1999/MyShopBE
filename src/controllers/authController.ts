@@ -3,7 +3,8 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
 import { createToken, verifyToken } from "../utils/jwtToken";
-import crypto from "crypto";
+import crypto, { checkPrime } from "crypto";
+import { isExpiresAt } from "../utils/method";
 
 const prisma = new PrismaClient();
 
@@ -216,7 +217,7 @@ export const loginFacebook = async (
   });
 
   if (checkEmail) {
-    res.status(400).json({ message: "Email đã tồn tại", statusCode: 400 });
+    res.status(200).json({ message: "Đăng nhập thành công", statusCode: 200 });
     return;
   }
 
@@ -327,19 +328,7 @@ export const loginFacebook = async (
 </html>`;
 
   await sendMail(createUser.email, subject, html);
-  res.status(201).json({
-    message: "Đăng ký tài khoản thành công",
-    content: {
-      id: createUser.user_id,
-      name: createUser.username,
-      email: createUser.email,
-      phone: createUser.phone_number,
-      address: createUser.address,
-      role: createUser.role,
-      avatar: createUser.avatar_url,
-    },
-    statusCode: 201,
-  });
+  res.status(200).json({ message: "Đăng nhập thành công", statusCode: 200 });
 };
 
 export const extendToken = async (
@@ -367,6 +356,12 @@ export const extendToken = async (
 
   if (!checkDateToken) {
     res.status(401).json({ statusCode: 401 });
+
+    await prisma.refreshTokens.delete({
+      where: {
+        token_id: checkTokenDb.token_id,
+      },
+    });
     return;
   }
 
@@ -500,5 +495,102 @@ export const forgotPassword = async (
   res.status(200).json({
     message: "Gửi mã khôi phục tài khoản thành công",
     statusCode: 200,
+  });
+};
+
+export const changePassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email, code, newPass } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkCode = await prisma.forgotPasswordCodes.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (!checkCode) {
+    res.status(400).json({ message: "Code không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkCodeSuccess = code === checkCode.code;
+
+  if (!checkCodeSuccess) {
+    res.status(400).json({ message: "Code không chính xác", statusCode: 400 });
+    return;
+  }
+
+  const checkCodeDate = isExpiresAt(checkCode.expires_at);
+
+  if (!checkCodeDate) {
+    res.status(400).json({ message: "Code hết hạn", statusCode: 400 });
+
+    await prisma.forgotPasswordCodes.delete({
+      where: {
+        code_id: checkCode.code_id,
+      },
+    });
+    return;
+  }
+
+  const checkPassHistory = await prisma.passwordHistory.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (checkPassHistory) {
+    const isPast = bcrypt.compareSync(newPass, checkPassHistory.old_password);
+
+    if (isPast) {
+      res.status(400).json({
+        message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        statusCode: 400,
+      });
+      return;
+    }
+  }
+
+  const hashedPassword = await bcrypt.hash(newPass, 10);
+
+  await prisma.passwordHistory.upsert({
+    where: { user_id: checkEmail.user_id },
+    update: {
+      old_password: checkEmail.password,
+    },
+    create: {
+      user_id: checkEmail.user_id,
+      old_password: checkEmail.password,
+    },
+  });
+
+  await prisma.users.update({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  res.status(200).json({ message: "Đổi mật khẩu thành công", statusCode: 200 });
+
+  await prisma.forgotPasswordCodes.delete({
+    where: {
+      code_id: checkCode.code_id,
+    },
   });
 };

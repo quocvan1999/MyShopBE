@@ -38,6 +38,16 @@ model Categories {
   @@index([parent_id], map: "parent_id")
 }
 
+model ForgotPasswordCodes {
+  code_id    Int       @id @default(autoincrement())
+  user_id    Int?      @unique(map: "user_id")
+  code       String    @db.VarChar(10)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  expires_at DateTime  @db.Timestamp(0)
+  used       Boolean?  @default(false)
+  Users      Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "ForgotPasswordCodes_ibfk_1")
+}
+
 model OrderDetails {
   order_detail_id Int       @id @default(autoincrement())
   order_id        Int?
@@ -65,15 +75,12 @@ model Orders {
   @@index([user_id], map: "user_id")
 }
 
-model PasswordResets {
-  reset_id    Int       @id @default(autoincrement())
-  user_id     Int?
-  reset_token String    @db.VarChar(255)
-  created_at  DateTime? @default(now()) @db.Timestamp(0)
-  expires_at  DateTime  @db.Timestamp(0)
-  Users       Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "PasswordResets_ibfk_1")
-
-  @@index([user_id], map: "user_id")
+model PasswordHistory {
+  history_id   Int       @id @default(autoincrement())
+  user_id      Int?      @unique(map: "user_id")
+  old_password String    @db.VarChar(255)
+  changed_at   DateTime? @default(now()) @db.Timestamp(0)
+  Users        Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "PasswordHistory_ibfk_1")
 }
 
 model Payments {
@@ -159,7 +166,7 @@ model Users {
   Cart                Cart[]
   ForgotPasswordCodes ForgotPasswordCodes?
   Orders              Orders[]
-  PasswordResets      PasswordResets[]
+  PasswordHistory     PasswordHistory?
   RefreshTokens       RefreshTokens?
   Reviews             Reviews[]
   Wishlists           Wishlists[]
@@ -174,14 +181,4 @@ model Wishlists {
 
   @@index([product_id], map: "product_id")
   @@index([user_id], map: "user_id")
-}
-
-model ForgotPasswordCodes {
-  code_id    Int       @id @default(autoincrement())
-  user_id    Int?      @unique(map: "user_id")
-  code       String    @db.VarChar(10)
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  expires_at DateTime  @db.Timestamp(0)
-  used       Boolean?  @default(false)
-  Users      Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "ForgotPasswordCodes_ibfk_1")
 }

@@ -6,6 +6,7 @@ import {
   sinup,
   loginFacebook,
   forgotPassword,
+  changePassword,
 } from "../controllers/authController";
 
 const authRoutes: Router = express.Router();
@@ -15,4 +16,5 @@ authRoutes.post("/login", tryCatch(login));
 authRoutes.post("/login-facebook", tryCatch(loginFacebook));
 authRoutes.post("/extend-token", tryCatch(extendToken));
 authRoutes.post("/forgot-password", tryCatch(forgotPassword));
+authRoutes.post("/change-password", tryCatch(changePassword));
 export default authRoutes;

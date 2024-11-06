@@ -19,3 +19,8 @@ export const getVietnamTime = (): string => {
 
   return formattedDateTime;
 };
+
+export const isExpiresAt = (expiresAt: Date): boolean => {
+  const now = new Date();
+  return expiresAt > now;
+};
