@@ -55,3 +55,12 @@
   ```bash
   /api/auth/change-password
   ```
+
+7. Đăng xuất
+
+- Các trường dữ liệu: email.
+- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra bảng Forgot Password và RefToken nếu có id của người dùng thì xoá khỏi bảng. Cuối cùng trả về res 200 và xoá refreshToken khỏi cookie người dùng.
+
+  ```bash
+  /api/auth/logout
+  ```

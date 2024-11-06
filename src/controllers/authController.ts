@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
 import { createToken, verifyToken } from "../utils/jwtToken";
-import crypto, { checkPrime } from "crypto";
+import crypto from "crypto";
 import { isExpiresAt } from "../utils/method";
 
 const prisma = new PrismaClient();
@@ -202,6 +202,58 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     accessToken: accessToken,
     statusCode: 200,
   });
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkForgotPassword = await prisma.forgotPasswordCodes.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (checkForgotPassword) {
+    await prisma.forgotPasswordCodes.delete({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+    });
+  }
+
+  const checkRefToken = await prisma.refreshTokens.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (checkRefToken) {
+    await prisma.refreshTokens.delete({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+    });
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 0,
+  });
+
+  res.status(200).json({ message: "Đăng xuất thành công", statusCode: 200 });
 };
 
 export const loginFacebook = async (
