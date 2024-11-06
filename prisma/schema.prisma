@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Brands {
+  brand_id    Int        @id @default(autoincrement())
+  name        String     @db.VarChar(255)
+  description String?    @db.Text
+  Products    Products[]
+}
+
+model Cart {
+  cart_id    Int       @id @default(autoincrement())
+  user_id    Int?
+  product_id Int?
+  quantity   Int
+  Users      Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "Cart_ibfk_1")
+  Products   Products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "Cart_ibfk_2")
+
+  @@index([product_id], map: "product_id")
+  @@index([user_id], map: "user_id")
+}
+
+model Categories {
+  category_id      Int          @id @default(autoincrement())
+  name             String       @db.VarChar(255)
+  description      String       @db.Text
+  parent_id        Int?
+  Categories       Categories?  @relation("CategoriesToCategories", fields: [parent_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "Categories_ibfk_1")
+  other_Categories Categories[] @relation("CategoriesToCategories")
+  Products         Products[]
+
+  @@index([parent_id], map: "parent_id")
+}
+
+model OrderDetails {
+  order_detail_id Int       @id @default(autoincrement())
+  order_id        Int?
+  product_id      Int?
+  quantity        Int
+  price           Decimal   @db.Decimal(10, 2)
+  Orders          Orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "OrderDetails_ibfk_1")
+  Products        Products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "OrderDetails_ibfk_2")
+
+  @@index([order_id], map: "order_id")
+  @@index([product_id], map: "product_id")
+}
+
+model Orders {
+  order_id     Int            @id @default(autoincrement())
+  user_id      Int?
+  total_price  Decimal        @db.Decimal(10, 2)
+  order_status String?        @default("pending") @db.VarChar(50)
+  created_at   DateTime?      @default(now()) @db.Timestamp(0)
+  updated_at   DateTime?      @default(now()) @db.Timestamp(0)
+  OrderDetails OrderDetails[]
+  Users        Users?         @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "Orders_ibfk_1")
+  Payments     Payments[]
+
+  @@index([user_id], map: "user_id")
+}
+
+model PasswordResets {
+  reset_id    Int       @id @default(autoincrement())
+  user_id     Int?
+  reset_token String    @db.VarChar(255)
+  created_at  DateTime? @default(now()) @db.Timestamp(0)
+  expires_at  DateTime  @db.Timestamp(0)
+  Users       Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "PasswordResets_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model Payments {
+  payment_id     Int       @id @default(autoincrement())
+  order_id       Int?
+  payment_method String?   @db.VarChar(50)
+  payment_status String?   @default("pending") @db.VarChar(50)
+  transaction_id String?   @db.VarChar(255)
+  created_at     DateTime? @default(now()) @db.Timestamp(0)
+  Orders         Orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "Payments_ibfk_1")
+
+  @@index([order_id], map: "order_id")
+}
+
+model ProductImages {
+  image_id   Int       @id @default(autoincrement())
+  product_id Int?
+  image_url  String    @db.VarChar(255)
+  alt_text   String?   @db.VarChar(255)
+  Products   Products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "ProductImages_ibfk_1")
+
+  @@index([product_id], map: "product_id")
+}
+
+model Products {
+  product_id        Int             @id @default(autoincrement())
+  name              String          @db.VarChar(255)
+  description       String          @db.Text
+  price             Decimal         @db.Decimal(10, 2)
+  category_id       Int
+  brand_id          Int
+  quantity_in_stock Int?            @default(0)
+  created_at        DateTime?       @default(now()) @db.Timestamp(0)
+  updated_at        DateTime?       @default(now()) @db.Timestamp(0)
+  rating            Float?          @default(0) @db.Float
+  Cart              Cart[]
+  OrderDetails      OrderDetails[]
+  ProductImages     ProductImages[]
+  Categories        Categories      @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "Products_ibfk_1")
+  Brands            Brands          @relation(fields: [brand_id], references: [brand_id], onDelete: NoAction, onUpdate: NoAction, map: "Products_ibfk_2")
+  Reviews           Reviews[]
+  Wishlists         Wishlists[]
+
+  @@index([brand_id], map: "brand_id")
+  @@index([category_id], map: "category_id")
+}
+
+model RefreshTokens {
+  token_id      Int       @id @default(autoincrement())
+  user_id       Int?
+  refresh_token String    @db.VarChar(255)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+  expires_at    DateTime  @db.Timestamp(0)
+  Users         Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "RefreshTokens_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model Reviews {
+  review_id  Int       @id @default(autoincrement())
+  product_id Int?
+  user_id    Int?
+  rating     Int?
+  comment    String?   @db.Text
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+  Products   Products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "Reviews_ibfk_1")
+  Users      Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "Reviews_ibfk_2")
+
+  @@index([product_id], map: "product_id")
+  @@index([user_id], map: "user_id")
+}
+
+model Users {
+  user_id        Int              @id @default(autoincrement())
+  username       String           @db.VarChar(255)
+  password       String           @db.VarChar(255)
+  email          String           @unique(map: "email") @db.VarChar(255)
+  phone_number   String?          @db.VarChar(20)
+  address        String?          @db.VarChar(255)
+  created_at     DateTime?        @default(now()) @db.Timestamp(0)
+  updated_at     DateTime?        @default(now()) @db.Timestamp(0)
+  role           String?          @default("user") @db.VarChar(50)
+  avatar_url     String?          @db.VarChar(255)
+  Cart           Cart[]
+  Orders         Orders[]
+  PasswordResets PasswordResets[]
+  RefreshTokens  RefreshTokens[]
+  Reviews        Reviews[]
+  Wishlists      Wishlists[]
+}
+
+model Wishlists {
+  wishlist_id Int       @id @default(autoincrement())
+  user_id     Int?
+  product_id  Int?
+  Users       Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "Wishlists_ibfk_1")
+  Products    Products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "Wishlists_ibfk_2")
+
+  @@index([product_id], map: "product_id")
+  @@index([user_id], map: "user_id")
+}
