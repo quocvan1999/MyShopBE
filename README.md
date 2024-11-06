@@ -64,3 +64,12 @@
   ```bash
   /api/auth/logout
   ```
+
+8. Reset Password
+
+- Các trường dữ liệu: email, password, newPassword.
+- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra mật khẩu cũ xem có chính xác không. Kiểm tra mật khẩu mới xem có trùng với mật khẩu đã đổi lần trước hay không nếu qua hêt các điều kiện thì mã hoá mật khẩu mới. lưu mật khẩu trước khi update vào passHistory sao đó update mật khẩu mới cho người dùng và trả về res 200.
+
+  ```bash
+  /api/auth/reset-password
+  ```

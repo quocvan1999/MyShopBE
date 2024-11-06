@@ -646,3 +646,75 @@ export const changePassword = async (
     },
   });
 };
+
+export const resetPassword = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email, password, newPassword } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkPassword = bcrypt.compareSync(password, checkEmail.password);
+
+  if (!checkPassword) {
+    res
+      .status(400)
+      .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
+    return;
+  }
+
+  const historyPassword = await prisma.passwordHistory.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (historyPassword) {
+    const isPast = bcrypt.compareSync(
+      newPassword,
+      historyPassword.old_password
+    );
+
+    if (isPast) {
+      res.status(400).json({
+        message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        statusCode: 400,
+      });
+      return;
+    }
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.passwordHistory.upsert({
+    where: { user_id: checkEmail.user_id },
+    update: {
+      old_password: checkEmail.password,
+    },
+    create: {
+      user_id: checkEmail.user_id,
+      old_password: checkEmail.password,
+    },
+  });
+
+  await prisma.users.update({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+
+  res.status(200).json({ message: "Đổi mật khẩu thành công", statusCode: 200 });
+};
