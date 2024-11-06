@@ -9,7 +9,8 @@ CREATE TABLE Users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     role VARCHAR(50) DEFAULT 'user',
-    avatar_url VARCHAR(255)
+    avatar_url VARCHAR(255),
+    is_email_verified BOOLEAN DEFAULT FALSE
 );
 
 -- 2. Bảng Products -d
@@ -145,4 +146,15 @@ CREATE TABLE PasswordHistory (
     old_password VARCHAR(255) NOT NULL,          -- Mật khẩu cũ (nên mã hóa)
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Thời gian thay đổi mật khẩu
     FOREIGN KEY (user_id) REFERENCES Users(user_id)  -- Liên kết với bảng Users
+);
+
+--15. Bảng EmailVerificationCodes
+CREATE TABLE EmailVerificationCodes (
+    verification_id INT AUTO_INCREMENT PRIMARY KEY,  -- ID tự động tăng cho mỗi mã
+    user_id INT,                                     -- ID người dùng cần xác thực email
+    verification_code VARCHAR(10) NOT NULL,           -- Mã xác thực gửi cho người dùng
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- Thời gian mã được tạo
+    expires_at TIMESTAMP NOT NULL,                    -- Thời gian mã hết hạn
+    used BOOLEAN DEFAULT FALSE,                       -- Trạng thái mã đã sử dụng hay chưa
+    FOREIGN KEY (user_id) REFERENCES Users(user_id)  -- Khóa ngoại liên kết đến bảng Users
 );

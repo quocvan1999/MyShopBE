@@ -15,6 +15,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
         address: true,
         role: true,
         avatar_url: true,
+        is_email_verified: true,
       },
     });
   res

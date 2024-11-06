@@ -718,3 +718,189 @@ export const resetPassword = async (
 
   res.status(200).json({ message: "Đổi mật khẩu thành công", statusCode: 200 });
 };
+
+export const sendCodeVerifyEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { email } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const code = crypto.randomBytes(3).toString("hex");
+  const expired = new Date(new Date().getTime() + 2 * 60 * 1000);
+
+  await prisma.emailVerificationCodes.upsert({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+    update: {
+      verification_code: code,
+      expires_at: expired,
+    },
+    create: {
+      user_id: checkEmail.user_id,
+      expires_at: expired,
+      verification_code: code,
+    },
+  });
+
+  const subject = "Xác thực email cho tài khoản của bạn";
+  const html = `
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mã Xác Thực</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      color: #333333;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    p {
+      color: #555555;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .code {
+      display: inline-block;
+      background-color: #4CAF50;
+      color: #ffffff;
+      padding: 10px 20px;
+      font-size: 18px;
+      text-align: center;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #888888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mã Xác Thực của Bạn</h1>
+    <p>Chào bạn,</p>
+    <p>Cảm ơn bạn đã đăng ký tài khoản. Để hoàn tất đăng ký, vui lòng nhập mã xác thực dưới đây:</p>
+    
+    <div class="code">${code}</div>
+    
+    <p>Mã xác thực của bạn sẽ hết hạn sau 02 phút.</p>
+    
+    <div class="footer">
+      <p>Trân trọng,<br>Đội ngũ Hỗ trợ</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+  await sendMail(checkEmail.email, subject, html);
+  res.status(200).json({
+    message: "Gửi mã xác thực email thành công",
+    statusCode: 200,
+  });
+};
+
+export const verifyEmail = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { code, email } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkUserInEmailVerificationCodes =
+    await prisma.emailVerificationCodes.findUnique({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+    });
+
+  if (!checkUserInEmailVerificationCodes) {
+    res
+      .status(400)
+      .json({ message: "Mã xác thực không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkCodeSuccess =
+    code === checkUserInEmailVerificationCodes.verification_code;
+
+  if (!checkCodeSuccess) {
+    res
+      .status(400)
+      .json({ message: "Mã xác thực không chính xác", statusCode: 400 });
+    return;
+  }
+
+  const checkCodeDate = isExpiresAt(
+    checkUserInEmailVerificationCodes.expires_at
+  );
+
+  if (!checkCodeDate) {
+    res.status(400).json({ message: "Mã xác thực hết hạn", statusCode: 400 });
+
+    await prisma.emailVerificationCodes.delete({
+      where: {
+        verification_id: checkUserInEmailVerificationCodes.verification_id,
+      },
+    });
+    return;
+  }
+
+  await prisma.users.update({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+    data: {
+      is_email_verified: true,
+    },
+  });
+
+  await prisma.emailVerificationCodes.delete({
+    where: {
+      verification_id: checkUserInEmailVerificationCodes.verification_id,
+    },
+  });
+
+  res
+    .status(200)
+    .json({ message: "Xác thực email thành công", statusCode: 200 });
+};
