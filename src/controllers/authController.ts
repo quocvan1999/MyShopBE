@@ -200,3 +200,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
     res.status(200).json({ message: "Đăng nhập thành công", accessToken: accessToken, statusCode: 200 })
 };
+
+export const extendToken = async (req: Request, res: Response): Promise<void> => {
+
+}
