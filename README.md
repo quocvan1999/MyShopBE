@@ -73,3 +73,21 @@
   ```bash
   /api/auth/reset-password
   ```
+
+9. Send Code Verify Email
+
+- Các trường dữ liệu: email.
+- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Tạo code và thời hạn, kiểm tra id người dùng có trong bản lưu code hay không nếu có thì update còn không thì tạo mới, gửi mail chứa code cho người dùng và trả về res 200.
+
+  ```bash
+  /api/auth/send-code-verify-email
+  ```
+
+10. Verify email
+
+- Các trường dữ liệu: email, code.
+- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra code có trang DB hay không, Kiểm tra code có chính xác với code DB hay không, kiểm tra thời hạn code nếu hết hạn thì xoá code khỏi DB. Cập nhật trạng thái xác thực mail của user và xoá code khỏi DB.
+
+  ```bash
+  /api/auth/verify-email
+  ```
