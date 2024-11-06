@@ -5,6 +5,9 @@
 1. Đăng ký tài khoản
 
 - Các trường dữ liệu bao gồm: username, password, email, phone, address.
+
+* dsad
+
   ```bash
   /api/auth/singn
   ```
