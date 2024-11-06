@@ -124,7 +124,7 @@ model Products {
 model RefreshTokens {
   token_id      Int       @id @default(autoincrement())
   user_id       Int?      @unique
-  refresh_token String    @db.VarChar(255)
+  refresh_token String    @db.VarChar(255) @unique
   created_at    DateTime? @default(now()) @db.Timestamp(0)
   expires_at    DateTime  @db.Timestamp(0)
   Users         Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "RefreshTokens_ibfk_1")

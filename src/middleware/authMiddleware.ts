@@ -17,7 +17,7 @@ export const authMiddleware = (
 
   if (token && process.env.SECRET_KEY) {
     const isTokenValid = verifyToken(token, process.env.SECRET_KEY);
-
+    
     if (isTokenValid) {
       next();
     } else {

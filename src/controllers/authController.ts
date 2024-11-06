@@ -2,39 +2,39 @@ import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
-import { createToken } from "../utils/jwtToken";
+import { createToken, verifyToken } from "../utils/jwtToken";
 
 const prisma = new PrismaClient();
 
 export const sinup = async (req: Request, res: Response): Promise<void> => {
-    const { username, password, email, phone, address } = req.body;
+  const { username, password, email, phone, address } = req.body;
 
-    const checkEmail = await prisma.users.findUnique({
-        where: {
-            email,
-        },
-    });
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
 
-    if (checkEmail) {
-        res.status(400).json({ message: "Email đã tồn tại", statusCode: 400 });
-        return;
-    }
+  if (checkEmail) {
+    res.status(400).json({ message: "Email đã tồn tại", statusCode: 400 });
+    return;
+  }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    const createUser = await prisma.users.create({
-        data: {
-            username,
-            password: hashedPassword,
-            email,
-            phone_number: phone,
-            address,
-        },
-    });
+  const createUser = await prisma.users.create({
+    data: {
+      username,
+      password: hashedPassword,
+      email,
+      phone_number: phone,
+      address,
+    },
+  });
 
-    const subject = "Đăng ký tài khoản thành công";
-    const text = `Chào ${createUser.username}, cảm ơn bạn đã đăng ký. Tài khoản của bạn đã được tạo thành công.`;
-    const html = `<!DOCTYPE html>
+  const subject = "Đăng ký tài khoản thành công";
+  const text = `Chào ${createUser.username}, cảm ơn bạn đã đăng ký. Tài khoản của bạn đã được tạo thành công.`;
+  const html = `<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
@@ -124,83 +124,123 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
 </body>
 </html>`;
 
-    await sendMail(createUser.email, subject, text, html);
-    res.status(201).json({
-        message: "Đăng ký tài khoản thành công",
-        content: {
-            id: createUser.user_id,
-            name: username,
-            email: createUser.email,
-            phone: createUser.phone_number,
-            address: createUser.address,
-            role: createUser.role,
-            avatar: createUser.avatar_url,
-        },
-        statusCode: 201,
-    });
+  await sendMail(createUser.email, subject, text, html);
+  res.status(201).json({
+    message: "Đăng ký tài khoản thành công",
+    content: {
+      id: createUser.user_id,
+      name: username,
+      email: createUser.email,
+      phone: createUser.phone_number,
+      address: createUser.address,
+      role: createUser.role,
+      avatar: createUser.avatar_url,
+    },
+    statusCode: 201,
+  });
 
-    return
+  return
 };
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
-    const checkEmail = await prisma.users.findUnique({
-        where: {
-            email,
-        },
-    });
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
 
-    if (!checkEmail) {
-        res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
-        return;
+  if (!checkEmail) {
+    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    return;
+  }
+
+  const checkPassword = bcrypt.compareSync(password, checkEmail.password);
+
+  if (!checkPassword) {
+    res
+      .status(400)
+      .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
+    return;
+  }
+
+  const accessToken: string = createToken(
+    { email: checkEmail.email, user_id: checkEmail.user_id },
+    `${process.env.SECRET_KEY}`,
+    "2h"
+  );
+
+  const refreshToken: string = createToken(
+    { email: checkEmail.email, user_id: checkEmail.user_id },
+    `${process.env.SECRET_KEY}`,
+    "7d"
+  );
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await prisma.refreshTokens.upsert({
+    where: {
+      user_id: checkEmail.user_id
+    },
+    update: {
+      refresh_token: refreshToken
+    },
+    create: {
+      user_id: checkEmail.user_id,
+      refresh_token: refreshToken,
+      expires_at: expiresAt
     }
+  })
 
-    const checkPassword = bcrypt.compareSync(password, checkEmail.password);
-
-    if (!checkPassword) {
-        res
-            .status(400)
-            .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
-        return;
-    }
-
-    const accessToken: string = createToken(
-        { email: checkEmail.email, user_id: checkEmail.user_id },
-        `${process.env.SECRET_KEY}`,
-        "1h"
-    );
-
-    const refreshToken: string = createToken(
-        { email: checkEmail.email, user_id: checkEmail.user_id },
-        `${process.env.SECRET_KEY}`,
-        "7d"
-    );
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    await prisma.refreshTokens.upsert({
-        where: {
-            user_id: checkEmail.user_id
-        },
-        update: {
-            refresh_token: refreshToken
-        },
-        create: {
-            user_id: checkEmail.user_id,
-            refresh_token: refreshToken,
-            expires_at: expiresAt
-        }
-    })
-
-    res.cookie("refreshToken", refreshToken, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.status(200).json({ message: "Đăng nhập thành công", accessToken: accessToken, statusCode: 200 })
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  res.status(200).json({ message: "Đăng nhập thành công", accessToken: accessToken, statusCode: 200 })
 };
 
 export const extendToken = async (req: Request, res: Response): Promise<void> => {
+  const refreshToken: string = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    res.status(401).json({ statusCode: 401 })
+  }
+
+  const checkTokenDb = await prisma.refreshTokens.findUnique({
+    where: {
+      refresh_token: refreshToken
+    },
+  })
+
+  if (!checkTokenDb || checkTokenDb == null) {
+    res.status(401).json({ statusCode: 401 })
+  }
+
+  const checkDateToken = verifyToken(refreshToken, `${process.env.SECRET_KEY}`)
+
+  if (!checkDateToken) {
+    res.status(401).json({ statusCode: 401 })
+  }
+
+  if (checkTokenDb?.user_id !== null && checkTokenDb?.user_id !== undefined) {
+    const checkUser = await prisma.users.findUnique({
+      where: {
+        user_id: checkTokenDb.user_id,
+      },
+    });
+
+    if (checkUser) {
+      const accessToken: string = createToken(
+        { email: checkUser.email, user_id: checkUser.user_id },
+        `${process.env.SECRET_KEY}`,
+        "2h"
+      );
+
+      res.status(200).json({ message: "Tạo mới accessToken thành công", accessToken: accessToken, statusCode: 200 })
+    }
+  }
+
 
 }
