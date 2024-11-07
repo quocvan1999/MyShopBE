@@ -12,38 +12,73 @@
 - Req:
   - Body: username, password, email, phone, address.
 - Logic:
-  - kiểm tra trùng email.
+  - Kiểm tra trùng email - nếu trùng trả về res 400.
+  - Mã hoá mật khẩu.
+  - Thêm người dùng mới vào DB.
 - Res:
 
   - Code 201 và thông tin người dùng vừa đăng ký.
   - Email thông báo đăng ký thành công.
 
-2. Đăng nhập
+### 2. Đăng nhập dành cho người dùng
 
-- Các trường dữ liệu: email, password.
-- Kiểm tra xem email có trong DB hay không, kiểm tra mật khẩu, nếu đúng sẽ tạo accessToken và refreshToken. refreshToken sẽ được lưu và DB và lưu về cookies máy người dùng. accessToken sẽ được trả về qua res.
+```bash
+/api/auth/login
+```
 
-  ```bash
-  /api/auth/login
-  ```
+- Đăng nhập tài khoản dành cho người dùng.
+- Req:
+  - Body: email, password.
+- Logic:
+  - Kiểm tra email có trong DB hay không - nếu không trả về res 400.
+  - Kiểm tra mật khẩu - nếu sai trả về res 400.
+  - Tạo accessToken.
+  - Tạo refreshToken.
+  - Tạo ngày hết hạn của refreshToken.
+  - Kiểm tra xem người dùng có refreshToken trong DB - nếu chưa thì tạo mới còn đã có thì update.
+  - Thêm refreshToken vào cookie người dùng.
+- Res:
 
-3. Đăng nhập Facebook
+  - Code 200 và accessToken.
 
-- Các trường dữ liệu: name, email.
-- Kiểm tra xem email có trong DB hay không nếu có sẽ trả về res đăng nhập thành công, nếu email chưa có trong DB sẽ tạo người dùng mới bằng email sao đó gửi mail báo đăng ký tại khoản thành công và trả về res đăng nhập thành công với accessToken + lưu refToken vào DB.
+### 3. Đăng nhập Facebook
 
-  ```bash
-  /api/auth/login-facebook
-  ```
+```bash
+/api/auth/login-facebook
+```
 
-4. Extend Token
+- Đăng nhập Facebook dành cho người dùng.
+- Req:
+  - Body: name, email.
+- Logic:
+  - Kiểm tra email có trong DB hay không - nếu chưa có thì tạo mới người dùng và gửi mail tạo thông thông báo tạo tài khoản thành công.
+  - Lấy thông tin người dùng.
+  - Tạo accessToken.
+  - Tạo refreshToken.
+  - Tạo ngày hết hạn của refreshToken.
+  - Kiểm tra xem người dùng có refreshToken trong DB - nếu chưa thì tạo mới còn đã có thì update.
+  - Thêm refreshToken vào cookie người dùng.
+- Res:
 
-- Các trường dữ liệu: name, email.
-- Lấy refreshToken từ cookies của người dùng nếu không có báo res 401 nếu có kiểm tra xem refreshToken có trong DB hay không nếu không có trả về res 401. Kiểm tra xem token có hợp lệ và còn thời hạn hay không nếu không có trong DB hoặc hết hạn trả về res 401 và xoá token khỏi DB. Nếu vượt qua tất cả các điều kiện thì tạo token mới và trả và trả về res.
+  - Code 200 và accessToken.
 
-  ```bash
+### 4. Extend Token
+
+```bash
   /api/auth/extend-token
-  ```
+```
+
+- Duy trì đăng nhập người dùng.
+- Req:
+  - cookies: refreshToken.
+- Logic:
+  - Kiểm tra cookies có refreshToken hay không - nếu không trả về res 401.
+  - Kiểm tra refreshToken có trong DB hay không - nếu không có trả về res 401.
+  - Kiểm tra tính hợp lệ và thời hạn của refreshToken - nếu không hợp lệ hoặc hết hạn thì xoá refreshToken khỏi DB và trả về res 410.
+  - Lấy thông tin user của refreshToken đó và tạo một accessToken mới
+- Res:
+
+  - Code 200 và accessToken.
 
 5. Forgot Password
 
