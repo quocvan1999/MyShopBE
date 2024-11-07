@@ -225,62 +225,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
-export const logout = async (req: Request, res: Response): Promise<void> => {
-  const { email } = req.body;
-
-  const checkEmail = await prisma.users.findUnique({
-    where: {
-      email,
-    },
-  });
-
-  if (!checkEmail) {
-    res.status(400).json({
-      content: { message: "Email không tồn tại" },
-      statusCode: 400,
-      dateTime: getVietnamTime(),
-    });
-    return;
-  }
-
-  const checkForgotPassword = await prisma.forgotPasswordCodes.findUnique({
-    where: {
-      user_id: checkEmail.user_id,
-    },
-  });
-
-  if (checkForgotPassword) {
-    await prisma.forgotPasswordCodes.delete({
-      where: {
-        user_id: checkEmail.user_id,
-      },
-    });
-  }
-
-  const checkRefToken = await prisma.refreshTokens.findUnique({
-    where: {
-      user_id: checkEmail.user_id,
-    },
-  });
-
-  if (checkRefToken) {
-    await prisma.refreshTokens.delete({
-      where: {
-        user_id: checkEmail.user_id,
-      },
-    });
-  }
-
-  res.clearCookie("refreshToken", {
-    httpOnly: true,
-    secure: false,
-    sameSite: "lax",
-    maxAge: 0,
-  });
-
-  res.status(200).json({ message: "Đăng xuất thành công", statusCode: 200 });
-};
-
 export const loginFacebook = async (
   req: Request,
   res: Response
@@ -755,6 +699,62 @@ export const changePassword = async (
       code_id: checkCode.code_id,
     },
   });
+};
+
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+
+  const checkEmail = await prisma.users.findUnique({
+    where: {
+      email,
+    },
+  });
+
+  if (!checkEmail) {
+    res.status(400).json({
+      content: { message: "Email không tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
+    return;
+  }
+
+  const checkForgotPassword = await prisma.forgotPasswordCodes.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (checkForgotPassword) {
+    await prisma.forgotPasswordCodes.delete({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+    });
+  }
+
+  const checkRefToken = await prisma.refreshTokens.findUnique({
+    where: {
+      user_id: checkEmail.user_id,
+    },
+  });
+
+  if (checkRefToken) {
+    await prisma.refreshTokens.delete({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+    });
+  }
+
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 0,
+  });
+
+  res.status(200).json({ message: "Đăng xuất thành công", statusCode: 200 });
 };
 
 export const resetPassword = async (

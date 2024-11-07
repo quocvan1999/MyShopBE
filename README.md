@@ -80,71 +80,143 @@
 
   - Code 200 và accessToken.
 
-5. Forgot Password
+### 5. Forgot Password
 
-- Các trường dữ liệu: email.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400, tạo code và thời hạn của code(2ph) sau đó kiểm tra xem id người dùng có trong bảng lưu code hay chưa nếu có rồi thì cập nhật lại code mới và id người dùng đó nếu chưa thì tạo mới. Gửi mail code cho người dùng và trả về res 200.
+```bash
+ /api/auth/forgot-password
+```
 
-  ```bash
-  /api/auth/forgot-password
-  ```
+- Tạo mã khôi phục mật khẩu cho người dùng.
+- Req:
+  - Body: email.
+- Logic:
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Tạo mã code khôi phục.
+  - Tạo thời gian hết hạn của code.
+  - Kiểm tra trong DB xem người dùng đã có mã code hay chưa - nếu đã có thì update code mới còn chưa thì tạo mới.
+- Res:
 
-6. Change Password
+  - Code 200.
+  - Mail chứa code khôi phục mật khẩu
 
-- Các trường dữ liệu: email, code, newPass.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra xem id người dùng có code được lưu trong DB hay không nếu không trả về res 400 nếu có kiểm tra code người dùng nhập và code lưu trong DB có giống nhau hay không nếu không trả về res 400. Nếu code đúng thì kiểm tra code trong DB còn hạn hay không nếu không bắn res 400 về và xoá code lưu ở hệ thống. Nếu code còn hạn và chính xác thì kiểm tra kiểm tra trong bảng passHistory có id của người dùng không nếu có thì kiểm tra newPass và pass được lưu ở historu có giống nhau hay không nếu giống trả về res 400. nếu không thì mã hoá pass mới sau đó kiểm tra trong passHitory có id người dùng không nếu có thì cập nhật pass trước khi update và history nếu không có thì tạo mới bằng pass trước khi đổi để sử dụng cho việc so sánh sau này cuối cùng là update pass mới đã mã hoá cho user và trả res 200 về cho người dùng cuối cùng là xoá code xác nhận đổi mật khẩu trong DB.
+### 6. Change Password
 
-  ```bash
-  /api/auth/change-password
-  ```
+```bash
+ /api/auth/change-password
+```
 
-7. Đăng xuất
+- Khôi phục mật khẩu cho tài khoản.
+- Req:
+  - Body: email, code, newPass.
+- Logic:
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Kiểm tra xem code có trong DB hay không - nếu không trả về res 400.
+  - Kiểm tra code người dùng gửi và code trong DB có giống nhau không - nếu sai trả về res 400.
+  - Kiểm tra thời hạn của code - nếu code hết hạn trả về res 400 và xoá code khỏi DB.
+  - Kiểm tra email đã từng đổi mật khẩu hay chưa.
+  - Nếu người dùng đã đổi mật khẩu trước đó thì kiểm tra mật khẩu mới có trùng với mật khẩu trước đó không - nếu trùng trả về res 400.
+  - Mã hoá mật khẩu mới.
+  - Update mật khẩu cũ vào DB để lưu lại.
+  - Update lại mật khẩu mới vào thông tin người dùng.
+  - Xoá code khỏi DB.
+- Res:
 
-- Các trường dữ liệu: email.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra bảng Forgot Password và RefToken nếu có id của người dùng thì xoá khỏi bảng. Cuối cùng trả về res 200 và xoá refreshToken khỏi cookie người dùng.
+  - Code 200.
 
-  ```bash
+### 7. Đăng xuất
+
+```bash
   /api/auth/logout
-  ```
+```
 
-8. Reset Password
+- Đăng xuất người dùng.
+- Req:
+  - Body: email.
+- Logic:
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Kiểm tra mã khôi phục mật khẩu trong DB - nếu có thì xoá đi.
+  - Kiểm tra RefToken trong DB - nếu có thì xoá đi.
+  - Xoá refreshToken được lưu ở cookies của người dùng.
+- Res:
 
-- Các trường dữ liệu: email, password, newPassword.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra mật khẩu cũ xem có chính xác không. Kiểm tra mật khẩu mới xem có trùng với mật khẩu đã đổi lần trước hay không nếu qua hêt các điều kiện thì mã hoá mật khẩu mới. lưu mật khẩu trước khi update vào passHistory sao đó update mật khẩu mới cho người dùng và trả về res 200.
+  - Code 200.
 
-  ```bash
+### 8. Reset Password
+
+```bash
   /api/auth/reset-password
-  ```
+```
 
-9. Send Code Verify Email
+- Đổi mật khẩu người dùng.
+- Req:
+  - Body: email, password, newPassword.
+- Logic:
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Kiểm tra mật khẩu - nếu sai thì trả về res 400.
+  - Kiểm tra mật khẩu mới và mật khẩu đã đổi gần đây - nếu giống nhau trả về res 400.
+  - Mã hoá mật khẩu mới.
+  - Update mật khẩu cũ vào lịch sử đổi mật khẩu.
+  - Update mật khẩu mới cho người dùng.
+- Res:
 
-- Các trường dữ liệu: email.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Tạo code và thời hạn, kiểm tra id người dùng có trong bản lưu code hay không nếu có thì update còn không thì tạo mới, gửi mail chứa code cho người dùng và trả về res 200.
+  - Code 200.
 
-  ```bash
-  /api/auth/send-code-verify-email
-  ```
+### 9. Send Code Verify Email
 
-10. Verify email
+```bash
+/api/auth/send-code-verify-email
+```
 
-- Các trường dữ liệu: email, code.
-- Kiểm tra email xem có trong DB hay không nếu không trả về res 400. Kiểm tra code có trang DB hay không, Kiểm tra code có chính xác với code DB hay không, kiểm tra thời hạn code nếu hết hạn thì xoá code khỏi DB. Cập nhật trạng thái xác thực mail của user và xoá code khỏi DB.
+- Tạo mã xác thực email.
+- Req:
+  - Body: email.
+- Logic:
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Tạo code xác thực.
+  - Tạo thời hạn code.
+  - Update code vào DB - nếu chưa có thì tạo mới.
+- Res:
 
-  ```bash
-  /api/auth/verify-email
-  ```
+  - Code 200.
+  - Mail chứa mã xác thực.
 
-  ## USER API
+### 10. Verify email
 
-1. Lấy danh sách người dùng
+```bash
+/api/auth/verify-email
+```
 
-- Phải có token đăng nhập mới lấy được danh sách.
+- Xác thực email.
+- Req:
+  - Body: email, code.
+- Logic:
 
-  ```bash
-  /api/users
-  ```
+  - Kiểm tra email có trong DB không - nếu không trả về res 400.
+  - Kiểm tra người dùng có tạo mã xác thực trong DB hay không - nếu không trả về res 400.
+  - Kiểm tra mã xác thực của người dùng và DB có giống nhau - nếu không trả về res 400.
+  - Kiểm tra thời hạn code - nếu hết hạn trả về res 400 và xoá code khỏi DB.
+  - Update trạng thái xác thực mail của người dùng.
 
-2. Lấy thông tin người dùng đăng nhập
+- Res:
+
+  - Code 200.
+
+## USER API
+
+### 1. Lấy danh sách người dùng
+
+```bash
+/api/users
+```
+
+- lấy danh sách người dùng.
+- Middleware;
+  - headers: token(accessToken).
+- Res:
+
+  - Code 200 và danh sách người dùng.
+
+### 2. Lấy thông tin người dùng đăng nhập
 
 - Lấy thông tin người đăng nhập bằng token gửi qua headers.
 
@@ -152,10 +224,20 @@
   /api/profile
   ```
 
-3. Cập nhật thông tin người dùng đăng nhập
+- lấy thông tin người dùng bằng accessToken.
 
-- Cập nhật thông tin người dùng đăng đăng nhập thông qua accessToken.
+- Middleware;
 
-  ```bash
-  /api/profile
-  ```
+  - headers: token(accessToken).
+
+- Req:
+
+  - headers: token.
+
+- Logic:
+
+  - Kiểm tra token - nếu không có trả về res 401.
+  - Lấy thông tin người dùng bằng accessToken.
+
+- Res:
+  - Code 200 và thông tin người dùng.
