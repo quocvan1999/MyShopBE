@@ -2,7 +2,7 @@ import express, { Router } from "express";
 import {
   getProfile,
   getUsers,
-  getUsersSearchPagination,
+  updateProfile,
 } from "../controllers/userController";
 import { tryCatch } from "../utils/tryCatch";
 import { authMiddleware } from "../middleware/authMiddleware";
@@ -10,11 +10,7 @@ import { authMiddleware } from "../middleware/authMiddleware";
 const userRoutes: Router = express.Router();
 
 userRoutes.get("/", authMiddleware, tryCatch(getUsers));
-userRoutes.get(
-  "/phan-trang-tim-kiem",
-  authMiddleware,
-  tryCatch(getUsersSearchPagination)
-);
 userRoutes.get("/profile", authMiddleware, tryCatch(getProfile));
+userRoutes.put("/profile", authMiddleware, tryCatch(updateProfile));
 
 export default userRoutes;

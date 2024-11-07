@@ -9,7 +9,7 @@ import { getVietnamTime, isExpiresAt } from "../utils/method";
 const prisma = new PrismaClient();
 
 export const sinup = async (req: Request, res: Response): Promise<void> => {
-  const { username, password, email, phone, address } = req.body;
+  const { username, password, email, phone_number, address } = req.body;
 
   const checkEmail = await prisma.users.findUnique({
     where: {
@@ -33,7 +33,7 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
       username,
       password: hashedPassword,
       email,
-      phone_number: phone,
+      phone_number: phone_number,
       address,
     },
   });
