@@ -1,11 +1,11 @@
 -- 1. Bảng Users - d
 CREATE TABLE Users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL COLLATE utf8mb4_bin,
     password VARCHAR(255) NOT NULL, -- Nên mã hóa
     email VARCHAR(255) NOT NULL UNIQUE,
     phone_number VARCHAR(20),
-    address VARCHAR(255),
+    address VARCHAR(255) COLLATE utf8mb4_bin,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     role VARCHAR(50) DEFAULT 'user',
@@ -16,7 +16,7 @@ CREATE TABLE Users (
 -- 2. Bảng Products -d
 CREATE TABLE Products (
     product_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL COLLATE utf8mb4_bin,
     description TEXT NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     category_id INT NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE Products (
 -- 3. Bảng Categories -d
 CREATE TABLE Categories (
     category_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL COLLATE utf8mb4_bin,
     description TEXT NOT NULL,
     parent_id INT,
     FOREIGN KEY (parent_id) REFERENCES Categories(category_id)
@@ -41,7 +41,7 @@ CREATE TABLE Categories (
 -- 4. Bảng Brands -d
 CREATE TABLE Brands (
     brand_id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL COLLATE utf8mb4_bin,
     description TEXT
 );
 
@@ -118,7 +118,7 @@ CREATE TABLE Wishlists (
     FOREIGN KEY (product_id) REFERENCES Products(product_id)
 );
 
---12. RefreshTokens
+--13. RefreshTokens
 CREATE TABLE RefreshTokens (
     token_id INT AUTO_INCREMENT PRIMARY KEY,   
     user_id INT UNIQUE,                              
@@ -128,7 +128,7 @@ CREATE TABLE RefreshTokens (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)  
 );
 
---13. Bảng ForgotPasswordCodes
+--14. Bảng ForgotPasswordCodes
 CREATE TABLE ForgotPasswordCodes (
     code_id INT AUTO_INCREMENT PRIMARY KEY,          -- ID tự động tăng cho mỗi mã
     user_id INT UNIQUE,                                     -- ID của người dùng yêu cầu quên mật khẩu
@@ -139,7 +139,7 @@ CREATE TABLE ForgotPasswordCodes (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)  -- Khóa ngoại liên kết đến bảng Users
 );
 
---14. Bảng PasswordHistory
+--15. Bảng PasswordHistory
 CREATE TABLE PasswordHistory (
     history_id INT AUTO_INCREMENT PRIMARY KEY,  -- Khóa chính, tự động tăng
     user_id INT UNIQUE,                                -- ID người dùng liên kết với bảng Users
@@ -148,13 +148,12 @@ CREATE TABLE PasswordHistory (
     FOREIGN KEY (user_id) REFERENCES Users(user_id)  -- Liên kết với bảng Users
 );
 
---15. Bảng EmailVerificationCodes
+--16. Bảng EmailVerificationCodes
 CREATE TABLE EmailVerificationCodes (
     verification_id INT AUTO_INCREMENT PRIMARY KEY,  -- ID tự động tăng cho mỗi mã
-    user_id INT,                                     -- ID người dùng cần xác thực email
+    user_id INT UNIQUE,                                     -- ID người dùng cần xác thực email
     verification_code VARCHAR(10) NOT NULL,           -- Mã xác thực gửi cho người dùng
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- Thời gian mã được tạo
     expires_at TIMESTAMP NOT NULL,                    -- Thời gian mã hết hạn
-    used BOOLEAN DEFAULT FALSE,                       -- Trạng thái mã đã sử dụng hay chưa
     FOREIGN KEY (user_id) REFERENCES Users(user_id)  -- Khóa ngoại liên kết đến bảng Users
 );

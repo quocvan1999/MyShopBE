@@ -38,6 +38,15 @@ model Categories {
   @@index([parent_id], map: "parent_id")
 }
 
+model EmailVerificationCodes {
+  verification_id   Int       @id @default(autoincrement())
+  user_id           Int?      @unique(map: "user_id")
+  verification_code String    @db.VarChar(10)
+  created_at        DateTime? @default(now()) @db.Timestamp(0)
+  expires_at        DateTime  @db.Timestamp(0)
+  Users             Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "EmailVerificationCodes_ibfk_1")
+}
+
 model ForgotPasswordCodes {
   code_id    Int       @id @default(autoincrement())
   user_id    Int?      @unique(map: "user_id")
@@ -183,13 +192,4 @@ model Wishlists {
 
   @@index([product_id], map: "product_id")
   @@index([user_id], map: "user_id")
-}
-
-model EmailVerificationCodes {
-  verification_id   Int       @id @default(autoincrement())
-  user_id           Int?      @unique(map: "user_id")
-  verification_code String    @db.VarChar(10)
-  created_at        DateTime? @default(now()) @db.Timestamp(0)
-  expires_at        DateTime  @db.Timestamp(0)
-  Users             Users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "EmailVerificationCodes_ibfk_1")
 }

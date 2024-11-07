@@ -209,19 +209,32 @@
 /api/users
 ```
 
-- lấy danh sách người dùng.
+- lấy danh sách tất cả người dùng.
 - Middleware;
   - headers: token(accessToken).
 - Res:
 
   - Code 200 và danh sách người dùng.
 
-### 2. Lấy thông tin người dùng đăng nhập
+### 2. Lấy danh sách người dùng phân trang - tìm kiếm
+
+```bash
+/api/users/phan-trang-tim-kiem?query=&page=1&limit=10
+```
+
+- lấy danh sách người dùng có phân trang và tìm kiếm.
+- Middleware;
+  - headers: token(accessToken).
+- Res:
+
+  - Code 200 và danh sách người dùng.
+
+### 3. Lấy thông tin người dùng đăng nhập
 
 - Lấy thông tin người đăng nhập bằng token gửi qua headers.
 
   ```bash
-  /api/profile
+  /api/users/profile
   ```
 
 - lấy thông tin người dùng bằng accessToken.
