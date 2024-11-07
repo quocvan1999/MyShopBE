@@ -4,8 +4,14 @@
 
 1. Đăng ký tài khoản
 
-- Các trường dữ liệu: username, password, email, phone, address.
-- Kiểm tra trùng email, nếu đăng ký thành công sẽ có thông báo mail.
+- Đăng ký tài khoản dành cho người dùng.
+- Req:
+  - Body: username, password, email, phone, address.
+- Logic:
+  - kiểm tra trùng email.
+- Res:
+  - Code 201 và thông tin người dùng vừa đăng ký.
+  - Email thông báo đăng ký thành công.
 
   ```bash
   /api/auth/singn
@@ -102,9 +108,17 @@
   /api/users
   ```
 
-2. Lấy thông tin người dùng hiện tại
+2. Lấy thông tin người dùng đăng nhập
 
 - Lấy thông tin người đăng nhập bằng token gửi qua headers.
+
+  ```bash
+  /api/profile
+  ```
+
+3. Cập nhật thông tin người dùng đăng nhập
+
+- Cập nhật thông tin người dùng đăng đăng nhập thông qua accessToken.
 
   ```bash
   /api/profile
