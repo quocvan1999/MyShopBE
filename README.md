@@ -4,6 +4,10 @@
 
 ### 1. Đăng ký tài khoản
 
+```bash
+  /api/auth/singn
+```
+
 - Đăng ký tài khoản dành cho người dùng.
 - Req:
   - Body: username, password, email, phone, address.
@@ -13,10 +17,6 @@
 
   - Code 201 và thông tin người dùng vừa đăng ký.
   - Email thông báo đăng ký thành công.
-
-  ```bash
-  /api/auth/singn
-  ```
 
 2. Đăng nhập
 
