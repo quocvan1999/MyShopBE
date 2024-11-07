@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 export const createToken = (
   data: { user_id: number; email: string },
@@ -11,10 +11,30 @@ export const createToken = (
   });
 };
 
-export const verifyToken = (token: string, secretKey: string) => {
+export const verifyToken = (token: string, secretKey: string): boolean => {
   try {
     jwt.verify(token, secretKey);
     return true;
+  } catch (error) {
+    return false;
+  }
+};
+
+export const getUserIdFromToken = (
+  token: string,
+  secretKey: string
+): { email: string; user_id: number } | boolean => {
+  try {
+    const decoded = jwt.verify(token, secretKey);
+
+    if (typeof decoded !== "string" && decoded !== null) {
+      const { payload } = decoded as JwtPayload;
+
+      if (payload) {
+        return payload;
+      }
+    }
+    return false;
   } catch (error) {
     return false;
   }

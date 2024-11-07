@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import { sendMail } from "../config/sendMail";
 import { createToken, verifyToken } from "../utils/jwtToken";
 import crypto from "crypto";
-import { isExpiresAt } from "../utils/method";
+import { getVietnamTime, isExpiresAt } from "../utils/method";
 
 const prisma = new PrismaClient();
 
@@ -18,7 +18,11 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
   });
 
   if (checkEmail) {
-    res.status(400).json({ message: "Email đã tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Email đã tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -127,17 +131,20 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
 
   await sendMail(createUser.email, subject, html);
   res.status(201).json({
-    message: "Đăng ký tài khoản thành công",
     content: {
-      id: createUser.user_id,
-      name: username,
-      email: createUser.email,
-      phone: createUser.phone_number,
-      address: createUser.address,
-      role: createUser.role,
-      avatar: createUser.avatar_url,
+      data: {
+        id: createUser.user_id,
+        name: username,
+        email: createUser.email,
+        phone: createUser.phone_number,
+        address: createUser.address,
+        role: createUser.role,
+        avatar: createUser.avatar_url,
+      },
+      message: "Đăng ký tài khoản thành công",
     },
     statusCode: 201,
+    dateTime: getVietnamTime(),
   });
 };
 
@@ -151,16 +158,26 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Email không tồn tại",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
   const checkPassword = bcrypt.compareSync(password, checkEmail.password);
 
   if (!checkPassword) {
-    res
-      .status(400)
-      .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Mật khẩu không chính xác",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -198,9 +215,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
   res.status(200).json({
-    message: "Đăng nhập thành công",
-    accessToken: accessToken,
+    content: {
+      message: "Đăng nhập thành công",
+      accessToken: accessToken,
+    },
     statusCode: 200,
+    dateTime: getVietnamTime(),
   });
 };
 
@@ -214,7 +234,11 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Email không tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -269,8 +293,47 @@ export const loginFacebook = async (
   });
 
   if (checkEmail) {
-    res.status(200).json({ message: "Đăng nhập thành công", statusCode: 200 });
-    return;
+    const accessToken: string = createToken(
+      { email: checkEmail.email, user_id: checkEmail.user_id },
+      `${process.env.SECRET_KEY}`,
+      "2h"
+    );
+
+    const refreshToken: string = createToken(
+      { email: checkEmail.email, user_id: checkEmail.user_id },
+      `${process.env.SECRET_KEY}`,
+      "7d"
+    );
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await prisma.refreshTokens.upsert({
+      where: {
+        user_id: checkEmail.user_id,
+      },
+      update: {
+        refresh_token: refreshToken,
+      },
+      create: {
+        user_id: checkEmail.user_id,
+        refresh_token: refreshToken,
+        expires_at: expiresAt,
+      },
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.status(200).json({
+      content: {
+        message: "Đăng nhập thành công",
+        accessToken: accessToken,
+      },
+      statusCode: 200,
+      dateTime: getVietnamTime(),
+    });
   }
 
   const hashedPassword = await bcrypt.hash(
@@ -379,8 +442,48 @@ export const loginFacebook = async (
 </body>
 </html>`;
 
+  const accessToken: string = createToken(
+    { email: createUser.email, user_id: createUser.user_id },
+    `${process.env.SECRET_KEY}`,
+    "2h"
+  );
+
+  const refreshToken: string = createToken(
+    { email: createUser.email, user_id: createUser.user_id },
+    `${process.env.SECRET_KEY}`,
+    "7d"
+  );
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await prisma.refreshTokens.upsert({
+    where: {
+      user_id: createUser.user_id,
+    },
+    update: {
+      refresh_token: refreshToken,
+    },
+    create: {
+      user_id: createUser.user_id,
+      refresh_token: refreshToken,
+      expires_at: expiresAt,
+    },
+  });
+
   await sendMail(createUser.email, subject, html);
-  res.status(200).json({ message: "Đăng nhập thành công", statusCode: 200 });
+  res.cookie("refreshToken", refreshToken, {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+  res.status(200).json({
+    content: {
+      message: "Đăng nhập thành công",
+      accessToken: accessToken,
+    },
+    statusCode: 200,
+    dateTime: getVietnamTime(),
+  });
 };
 
 export const extendToken = async (
@@ -390,7 +493,9 @@ export const extendToken = async (
   const refreshToken: string = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    res.status(401).json({ statusCode: 401 });
+    res
+      .status(401)
+      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
   }
 
   const checkTokenDb = await prisma.refreshTokens.findUnique({
@@ -400,14 +505,18 @@ export const extendToken = async (
   });
 
   if (!checkTokenDb || checkTokenDb == null) {
-    res.status(401).json({ statusCode: 401 });
+    res
+      .status(401)
+      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
     return;
   }
 
   const checkDateToken = verifyToken(refreshToken, `${process.env.SECRET_KEY}`);
 
   if (!checkDateToken) {
-    res.status(401).json({ statusCode: 401 });
+    res
+      .status(401)
+      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
 
     await prisma.refreshTokens.delete({
       where: {
@@ -432,9 +541,12 @@ export const extendToken = async (
       );
 
       res.status(200).json({
-        message: "Tạo mới accessToken thành công",
-        accessToken: accessToken,
+        content: {
+          message: "Tạo mới accessToken thành công",
+          accessToken: accessToken,
+        },
         statusCode: 200,
+        dateTime: getVietnamTime(),
       });
     }
   }
@@ -453,7 +565,11 @@ export const forgotPassword = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Email không tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -545,8 +661,9 @@ export const forgotPassword = async (
 
   await sendMail(checkEmail.email, subject, html);
   res.status(200).json({
-    message: "Gửi mã khôi phục tài khoản thành công",
+    content: { message: "Gửi mã khôi phục tài khoản thành công" },
     statusCode: 200,
+    dateTiem: getVietnamTime(),
   });
 };
 
@@ -563,7 +680,11 @@ export const changePassword = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Email không tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -574,21 +695,35 @@ export const changePassword = async (
   });
 
   if (!checkCode) {
-    res.status(400).json({ message: "Code không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Code không tồn tại" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
   const checkCodeSuccess = code === checkCode.code;
 
   if (!checkCodeSuccess) {
-    res.status(400).json({ message: "Code không chính xác", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Code không chính xác",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
   const checkCodeDate = isExpiresAt(checkCode.expires_at);
 
   if (!checkCodeDate) {
-    res.status(400).json({ message: "Code hết hạn", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Code hết hạn" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
 
     await prisma.forgotPasswordCodes.delete({
       where: {
@@ -609,8 +744,11 @@ export const changePassword = async (
 
     if (isPast) {
       res.status(400).json({
-        message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        content: {
+          message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        },
         statusCode: 400,
+        dateTime: getVietnamTime(),
       });
       return;
     }
@@ -638,7 +776,11 @@ export const changePassword = async (
     },
   });
 
-  res.status(200).json({ message: "Đổi mật khẩu thành công", statusCode: 200 });
+  res.status(200).json({
+    content: { message: "Đổi mật khẩu thành công" },
+    statusCode: 200,
+    dateTime: getVietnamTime(),
+  });
 
   await prisma.forgotPasswordCodes.delete({
     where: {
@@ -660,16 +802,26 @@ export const resetPassword = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Email không tồn tại",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
   const checkPassword = bcrypt.compareSync(password, checkEmail.password);
 
   if (!checkPassword) {
-    res
-      .status(400)
-      .json({ message: "Mật khẩu không chính xác", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Mật khẩu không chính xác",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -687,8 +839,11 @@ export const resetPassword = async (
 
     if (isPast) {
       res.status(400).json({
-        message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        content: {
+          message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
+        },
         statusCode: 400,
+        dateTime: getVietnamTime(),
       });
       return;
     }
@@ -716,7 +871,13 @@ export const resetPassword = async (
     },
   });
 
-  res.status(200).json({ message: "Đổi mật khẩu thành công", statusCode: 200 });
+  res.status(200).json({
+    content: {
+      message: "Đổi mật khẩu thành công",
+    },
+    statusCode: 200,
+    dateTime: getVietnamTime(),
+  });
 };
 
 export const sendCodeVerifyEmail = async (
@@ -732,7 +893,13 @@ export const sendCodeVerifyEmail = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Email không tồn tại",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -824,8 +991,9 @@ export const sendCodeVerifyEmail = async (
 
   await sendMail(checkEmail.email, subject, html);
   res.status(200).json({
-    message: "Gửi mã xác thực email thành công",
+    content: { message: "Gửi mã xác thực email thành công" },
     statusCode: 200,
+    dateTime: getVietnamTime(),
   });
 };
 
@@ -842,7 +1010,13 @@ export const verifyEmail = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({ message: "Email không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Email không tồn tại",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -854,9 +1028,13 @@ export const verifyEmail = async (
     });
 
   if (!checkUserInEmailVerificationCodes) {
-    res
-      .status(400)
-      .json({ message: "Mã xác thực không tồn tại", statusCode: 400 });
+    res.status(400).json({
+      content: {
+        message: "Mã xác thực không tồn tại",
+      },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -864,9 +1042,11 @@ export const verifyEmail = async (
     code === checkUserInEmailVerificationCodes.verification_code;
 
   if (!checkCodeSuccess) {
-    res
-      .status(400)
-      .json({ message: "Mã xác thực không chính xác", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Mã xác thực không chính xác" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -875,7 +1055,11 @@ export const verifyEmail = async (
   );
 
   if (!checkCodeDate) {
-    res.status(400).json({ message: "Mã xác thực hết hạn", statusCode: 400 });
+    res.status(400).json({
+      content: { message: "Mã xác thực hết hạn" },
+      statusCode: 400,
+      dateTime: getVietnamTime(),
+    });
 
     await prisma.emailVerificationCodes.delete({
       where: {
@@ -900,7 +1084,9 @@ export const verifyEmail = async (
     },
   });
 
-  res
-    .status(200)
-    .json({ message: "Xác thực email thành công", statusCode: 200 });
+  res.status(200).json({
+    content: { message: "Xác thực email thành công" },
+    statusCode: 200,
+    dateTime: getVietnamTime(),
+  });
 };

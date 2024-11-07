@@ -91,3 +91,21 @@
   ```bash
   /api/auth/verify-email
   ```
+
+  ## USER API
+
+  1. Lấy danh sách người dùng
+
+- Phải có token đăng nhập mới lấy được danh sách.
+
+  ```bash
+  /api/users
+  ```
+
+  2. Lấy thông tin người dùng hiện tại
+
+- Phải có token đăng nhập mới lấy được danh sách.
+
+  ```bash
+  /api/profile
+  ```
