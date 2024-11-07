@@ -2,7 +2,7 @@
 
 ## AUTH API
 
-1. Đăng ký tài khoản
+### 1. Đăng ký tài khoản
 
 - Đăng ký tài khoản dành cho người dùng.
 - Req:
@@ -10,6 +10,7 @@
 - Logic:
   - kiểm tra trùng email.
 - Res:
+
   - Code 201 và thông tin người dùng vừa đăng ký.
   - Email thông báo đăng ký thành công.
 
