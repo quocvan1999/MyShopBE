@@ -94,7 +94,7 @@
 
   ## USER API
 
-  1. Lấy danh sách người dùng
+  11. Lấy danh sách người dùng
 
 - Phải có token đăng nhập mới lấy được danh sách.
 
@@ -102,7 +102,7 @@
   /api/users
   ```
 
-  2. Lấy thông tin người dùng hiện tại
+  12. Lấy thông tin người dùng hiện tại
 
 - Lấy thông tin người đăng nhập bằng token gửi qua headers.
 
