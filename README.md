@@ -23,7 +23,7 @@
 3. Đăng nhập Facebook
 
 - Các trường dữ liệu: name, email.
-- Kiểm tra xem email có trong DB hay không nếu có sẽ trả về res đăng nhập thành công, nếu email chưa có trong DB sẽ tạo người dùng mới bằng email sao đó gửi mail báo đăng ký tại khoản thành công và trả về res đăng nhập thành công.
+- Kiểm tra xem email có trong DB hay không nếu có sẽ trả về res đăng nhập thành công, nếu email chưa có trong DB sẽ tạo người dùng mới bằng email sao đó gửi mail báo đăng ký tại khoản thành công và trả về res đăng nhập thành công với accessToken + lưu refToken vào DB.
 
   ```bash
   /api/auth/login-facebook
@@ -104,7 +104,7 @@
 
   2. Lấy thông tin người dùng hiện tại
 
-- Phải có token đăng nhập mới lấy được danh sách.
+- Lấy thông tin người đăng nhập bằng token gửi qua headers.
 
   ```bash
   /api/profile
