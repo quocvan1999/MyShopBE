@@ -1333,6 +1333,115 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Reset Password
+ *     description: API này dùng để reset password
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Địa chỉ email của người dùng
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 description: Mật khẩu hiện tại của người dùng
+ *                 example: oldPassword123
+ *               newPassword:
+ *                 type: string
+ *                 description: Mật khẩu mới
+ *                 example: newPassword456
+ *     responses:
+ *       200:
+ *         description: Đổi mật khẩu thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Đổi mật khẩu thành công
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       401:
+ *         description: Mật khẩu không chính xác
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Mật khẩu không chính xác
+ *                 statusCode:
+ *                   type: number
+ *                   example: 401
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Email không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Email không tồn tại
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       409:
+ *         description: Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây
+ *                 statusCode:
+ *                   type: number
+ *                   example: 409
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const resetPassword = async (
   req: Request,
   res: Response
@@ -1346,11 +1455,11 @@ export const resetPassword = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({
+    res.status(404).json({
       content: {
         message: "Email không tồn tại",
       },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
@@ -1359,11 +1468,11 @@ export const resetPassword = async (
   const checkPassword = bcrypt.compareSync(password, checkEmail.password);
 
   if (!checkPassword) {
-    res.status(400).json({
+    res.status(401).json({
       content: {
         message: "Mật khẩu không chính xác",
       },
-      statusCode: 400,
+      statusCode: 401,
       dateTime: getVietnamTime(),
     });
     return;
@@ -1382,11 +1491,11 @@ export const resetPassword = async (
     );
 
     if (isPast) {
-      res.status(400).json({
+      res.status(409).json({
         content: {
           message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
         },
-        statusCode: 400,
+        statusCode: 409,
         dateTime: getVietnamTime(),
       });
       return;
