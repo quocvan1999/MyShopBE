@@ -637,6 +637,79 @@ export const loginFacebook = async (
   }
 };
 
+/**
+ * @swagger
+ * /api/auth/extend-token:
+ *   post:
+ *     summary: Extend the token
+ *     description: API này dùng để tạo mới accessToken để duy trì đăng nhập trên client
+ *     tags:
+ *       - AUTH
+ *     responses:
+ *       200:
+ *         description: Tạo mới accessToken thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Tạo mới accessToken thành công"
+ *                     accessToken:
+ *                       type: string
+ *                       example: "<access_token>"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Unauthorized"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 401
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Không tìm thấy tài nguyên
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Không tìm thấy tài nguyên"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const extendToken = async (
   req: Request,
   res: Response
@@ -644,9 +717,11 @@ export const extendToken = async (
   const refreshToken: string = req.cookies.refreshToken;
 
   if (!refreshToken) {
-    res
-      .status(401)
-      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
+    res.status(401).json({
+      content: { message: "Unauthorized" },
+      statusCode: 401,
+      dateTime: getVietnamTime(),
+    });
   }
 
   const checkTokenDb = await prisma.refreshTokens.findUnique({
@@ -656,9 +731,11 @@ export const extendToken = async (
   });
 
   if (!checkTokenDb || checkTokenDb == null) {
-    res
-      .status(401)
-      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
+    res.status(404).json({
+      content: { message: "Không tìm thấy tài nguyên" },
+      statusCode: 404,
+      dateTime: getVietnamTime(),
+    });
     return;
   }
 
@@ -667,7 +744,11 @@ export const extendToken = async (
   if (!checkDateToken) {
     res
       .status(401)
-      .json({ content: {}, statusCode: 401, dateTime: getVietnamTime() });
+      .json({
+        content: { message: "Unauthorized" },
+        statusCode: 401,
+        dateTime: getVietnamTime(),
+      });
 
     await prisma.refreshTokens.delete({
       where: {
