@@ -784,6 +784,69 @@ export const extendToken = async (
   }
 };
 
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Forgot password
+ *     description: API này dùng để tạo mã khôi phục tài khoản và gửi mail về cho người dùng
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "user@example.com"
+ *     responses:
+ *       200:
+ *         description: Gửi mã khôi phục tài khoản thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Gửi mã khôi phục tài khoản thành công"
+ *                     accessToken:
+ *                       type: string
+ *                       example: "<access_token>"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       409:
+ *         description: Email đã tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Email đã tồn tại"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 409
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const forgotPassword = async (
   req: Request,
   res: Response
