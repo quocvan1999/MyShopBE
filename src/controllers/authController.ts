@@ -1212,6 +1212,67 @@ export const changePassword = async (
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout
+ *     description: API này dùng để đăng xuất tài khoản người dùng, xoá forgot password, refToken khỏi DB và clear refreshToken khỏi cookie người dùng.
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Địa chỉ email của người dùng
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Đăng xuất thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Đăng xuất thành công
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Email không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Email không tồn tại
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const logout = async (req: Request, res: Response): Promise<void> => {
   const { email } = req.body;
 
@@ -1265,7 +1326,11 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
     maxAge: 0,
   });
 
-  res.status(200).json({ message: "Đăng xuất thành công", statusCode: 200 });
+  res.status(200).json({
+    content: { message: "Đăng xuất thành công" },
+    statusCode: 200,
+    dateTime: getVietnamTime(),
+  });
 };
 
 export const resetPassword = async (
