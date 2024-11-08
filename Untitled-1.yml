@@ -1,0 +1,100 @@
+openapi: "3.0.0"
+info:
+  title: API Title
+  version: "1.0"
+servers:
+  - url: https://localhost:8080
+paths:
+  /api/users/profile:
+    put:
+      summary: "Cập nhật thông tin người dùng đang đăng nhập"
+      description: "API này dùng để cập nhật người dùng đang đăng nhập thông qua accessToken"
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: token
+          in: header
+          description: accessToken
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Dữ liệu cập nhật
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "string"
+                phone_number:
+                  type: string
+                  example: "string"
+                address:
+                  type: string
+                  example: "string"
+      responses:
+        "200":
+          description: "lấy danh sách người dùng thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Cập nhật thông tin thành công"
+                  statusCode:
+                    type: number
+                    example: 200
+                  dateTime:
+                    type: string
+                    format: date-time
+                    example: "2022-01-01T12:00:00Z"
+        "400":
+          description: "Lấy thông tin người dùng không thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Lấy thông tin người dùng không thành công"
+                  statusCode:
+                    type: number
+                    example: 400
+                  dateTime:
+                    type: string
+                    format: date-time
+                    example: "2022-01-01T12:00:00Z"
+        "401":
+          description: "Unauthorized"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Unauthorized"
+                  statusCode:
+                    type: number
+                    example: 401
+                  dateTime:
+                    type: string
+                    format: date-time
+                    example: "2022-01-01T12:00:00Z"

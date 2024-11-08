@@ -1,0 +1,71 @@
+openapi: "3.0.3"
+info:
+  title: API Title
+  version: "1.0"
+servers:
+  - url: https://localhost:8080
+paths:
+  /api/users:
+    get:
+      summary: "Lấy danh sách người dùng"
+      description: "API này trả về danh sách người dùng mà không bao gồm các thông tin nhạy cảm như mật khẩu."
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: token
+          in: header
+          description: accessToken
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "lấy danh sách người dùng thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            user_id:
+                              type: integer
+                              example: 1
+                            username:
+                              type: string
+                              example: John Doe
+                            email:
+                              type: string
+                              example: johndoe@example.com
+                            phone_number:
+                              type: string
+                              example: 0987654321
+                            address:
+                              type: string
+                              example: 123 Main St, City, State, Zip Code
+                            role:
+                              type: string
+                              example: "user"
+                            avatar_url:
+                              type: string
+                              example: "https://example.com/avatar.jpg"
+                            is_email_verified:
+                              type: boolean
+                              example: true
+                      statusCode:
+                        type: number
+                        example: 200
+                      dateTime:
+                        type: string
+                        format: date-time
+                        example: "2022-01-01T12:00:00Z"
+        "401":
+          description: "Unauthorized"

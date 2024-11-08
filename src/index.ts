@@ -1,10 +1,6 @@
 import cookieParser from "cookie-parser";
-import express, {
-  ErrorRequestHandler,
-  NextFunction,
-  Request,
-  Response,
-} from "express";
+import express, { NextFunction, Request, Response } from "express";
+import { swaggerUi, swaggerSpec } from "./config/swaggerConfig";
 import cors from "cors";
 
 import rootRoutes from "./routes/rootRoutes";
@@ -22,6 +18,8 @@ app.use(
 app.use(cookieParser());
 
 app.use(express.json());
+
+app.use("/swagger/api", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use("/api", rootRoutes);
 
