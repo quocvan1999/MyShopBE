@@ -417,6 +417,53 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/login-facebook:
+ *   post:
+ *     summary: Đăng nhập Facebook
+ *     description: API này dùng để người dùng đăng nhập bằng Facebook
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       description: Thông tin đăng nhập
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 example: "string"
+ *               email:
+ *                 type: string
+ *                 example: "string"
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Đăng nhập thành công"
+ *                     accessToken:
+ *                       type: string
+ *                       example: "<access_token>"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const loginFacebook = async (
   req: Request,
   res: Response
