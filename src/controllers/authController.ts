@@ -1533,6 +1533,67 @@ export const resetPassword = async (
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/send-code-verify-email:
+ *   post:
+ *     summary: Send code verify email
+ *     description: API này dùng để gửi mail mã xác nhận email cho người dùng
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Địa chỉ email của người dùng
+ *                 example: user@example.com
+ *     responses:
+ *       200:
+ *         description: Gửi mã xác thực email thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Gửi mã xác thực email thành công
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Email không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: Email không tồn tại
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const sendCodeVerifyEmail = async (
   req: Request,
   res: Response
@@ -1546,11 +1607,11 @@ export const sendCodeVerifyEmail = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({
+    res.status(404).json({
       content: {
         message: "Email không tồn tại",
       },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
