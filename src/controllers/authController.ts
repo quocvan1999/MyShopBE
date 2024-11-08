@@ -742,13 +742,11 @@ export const extendToken = async (
   const checkDateToken = verifyToken(refreshToken, `${process.env.SECRET_KEY}`);
 
   if (!checkDateToken) {
-    res
-      .status(401)
-      .json({
-        content: { message: "Unauthorized" },
-        statusCode: 401,
-        dateTime: getVietnamTime(),
-      });
+    res.status(401).json({
+      content: { message: "Unauthorized" },
+      statusCode: 401,
+      dateTime: getVietnamTime(),
+    });
 
     await prisma.refreshTokens.delete({
       where: {
@@ -962,6 +960,136 @@ export const forgotPassword = async (
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   post:
+ *     summary: Change password
+ *     description: API này dùng để đổi mật khẩu tài khoản thông qua mã xác thực.
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "example@example.com"
+ *               code:
+ *                 type: string
+ *                 example: "123456"
+ *               newPass:
+ *                 type: string
+ *                 example: "NewP@ssw0rd"
+ *             required:
+ *               - email
+ *               - code
+ *               - newPass
+ *     responses:
+ *       200:
+ *         description: Đổi mật khẩu thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Đổi mật khẩu thành công"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T12:00:00Z"
+ *       400:
+ *         description: Mã code không chính xác
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mã code không chính xác"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 400
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T12:00:00Z"
+ *       401:
+ *         description: Code hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Code hết hạn"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 401
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T12:00:00Z"
+ *       404:
+ *         description: Dữ liệu không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Dữ liệu không tồn tại"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T12:00:00Z"
+ *       409:
+ *         description: Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây"
+ *                 statusCode:
+ *                   type: integer
+ *                   example: 409
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2024-01-01T12:00:00Z"
+ */
 export const changePassword = async (
   req: Request,
   res: Response
@@ -975,9 +1103,9 @@ export const changePassword = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({
+    res.status(404).json({
       content: { message: "Email không tồn tại" },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
@@ -990,9 +1118,9 @@ export const changePassword = async (
   });
 
   if (!checkCode) {
-    res.status(400).json({
+    res.status(404).json({
       content: { message: "Code không tồn tại" },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
@@ -1014,9 +1142,9 @@ export const changePassword = async (
   const checkCodeDate = isExpiresAt(checkCode.expires_at);
 
   if (!checkCodeDate) {
-    res.status(400).json({
+    res.status(401).json({
       content: { message: "Code hết hạn" },
-      statusCode: 400,
+      statusCode: 401,
       dateTime: getVietnamTime(),
     });
 
@@ -1038,11 +1166,11 @@ export const changePassword = async (
     const isPast = bcrypt.compareSync(newPass, checkPassHistory.old_password);
 
     if (isPast) {
-      res.status(400).json({
+      res.status(409).json({
         content: {
           message: "Mật khẩu mới trùng với mật khẩu đã sử dụng gần đây",
         },
-        statusCode: 400,
+        statusCode: 409,
         dateTime: getVietnamTime(),
       });
       return;

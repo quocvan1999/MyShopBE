@@ -36,7 +36,7 @@ paths:
                   example: "string"
       responses:
         "201":
-          description: "lấy danh sách người dùng thành công"
+          description: "Đăng ký tài khoản thành công"
           content:
             application/json:
               schema:
