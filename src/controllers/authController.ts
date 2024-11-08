@@ -8,6 +8,107 @@ import { getVietnamTime, isExpiresAt } from "../utils/method";
 
 const prisma = new PrismaClient();
 
+/**
+ * @swagger
+ * tags:
+ *   - name: AUTH
+ *     description: Các API liên quan đến xác thực người dùng
+ *
+ * /api/auth/sinup:
+ *   post:
+ *     summary: Đăng ký tài khoản mới cho người dùng
+ *     description: API này cho phép người dùng đăng ký tài khoản mới. Khi đăng ký thành công, một email xác nhận sẽ được gửi đến.
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       description: Thông tin đăng ký tài khoản
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: "john_doe"
+ *               password:
+ *                 type: string
+ *                 example: "P@ssw0rd"
+ *               email:
+ *                 type: string
+ *                 example: "johndoe@example.com"
+ *               phone_number:
+ *                 type: string
+ *                 example: "0987654321"
+ *               address:
+ *                 type: string
+ *                 example: "123 Main St, City, State, Zip Code"
+ *     responses:
+ *       201:
+ *         description: Đăng ký tài khoản thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Đăng ký tài khoản thành công"
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         user_id:
+ *                           type: string
+ *                           example: "12345"
+ *                         username:
+ *                           type: string
+ *                           example: "john_doe"
+ *                         email:
+ *                           type: string
+ *                           example: "johndoe@example.com"
+ *                         phone_number:
+ *                           type: string
+ *                           example: "0987654321"
+ *                         address:
+ *                           type: string
+ *                           example: "123 Main St, City, State, Zip Code"
+ *                         role:
+ *                           type: string
+ *                           example: "user"
+ *                         avatar_url:
+ *                           type: string
+ *                           example: "https://example.com/avatar.jpg"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 201
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       409:
+ *         description: Email đã tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Email đã tồn tại"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 409
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const sinup = async (req: Request, res: Response): Promise<void> => {
   const { username, password, email, phone_number, address } = req.body;
 
@@ -18,9 +119,9 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
   });
 
   if (checkEmail) {
-    res.status(400).json({
+    res.status(409).json({
       content: { message: "Email đã tồn tại" },
-      statusCode: 400,
+      statusCode: 409,
       dateTime: getVietnamTime(),
     });
     return;
@@ -133,13 +234,13 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
   res.status(201).json({
     content: {
       data: {
-        id: createUser.user_id,
-        name: username,
+        user_id: createUser.user_id,
+        username: username,
         email: createUser.email,
-        phone: createUser.phone_number,
+        phone_number: createUser.phone_number,
         address: createUser.address,
         role: createUser.role,
-        avatar: createUser.avatar_url,
+        avatar_url: createUser.avatar_url,
       },
       message: "Đăng ký tài khoản thành công",
     },
@@ -148,6 +249,97 @@ export const sinup = async (req: Request, res: Response): Promise<void> => {
   });
 };
 
+/**
+ * @swagger
+ * tags:
+ *   - name: AUTH
+ *     description: Các API liên quan đến xác thực người dùng
+ *
+ * /api/auth/login:
+ *   post:
+ *     summary: Đăng nhập
+ *     description: API này cho phép người dùng đăng nhập vào hệ thống.
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       description: Thông tin đăng nhập của người dùng
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Đăng nhập thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Đăng nhập thành công"
+ *                     accessToken:
+ *                       type: string
+ *                       example: "<access_token>"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       401:
+ *         description: Mật khẩu không chính xác
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mật khẩu không chính xác"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 401
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Email không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Email không tồn tại"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
@@ -158,11 +350,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   });
 
   if (!checkEmail) {
-    res.status(400).json({
+    res.status(404).json({
       content: {
         message: "Email không tồn tại",
       },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
@@ -171,11 +363,11 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const checkPassword = bcrypt.compareSync(password, checkEmail.password);
 
   if (!checkPassword) {
-    res.status(400).json({
+    res.status(401).json({
       content: {
         message: "Mật khẩu không chính xác",
       },
-      statusCode: 400,
+      statusCode: 401,
       dateTime: getVietnamTime(),
     });
     return;

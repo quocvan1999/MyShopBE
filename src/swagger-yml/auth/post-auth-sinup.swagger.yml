@@ -1,0 +1,101 @@
+openapi: "3.0.0"
+info:
+  title: API Title
+  version: "1.0"
+servers:
+  - url: https://localhost:8080
+paths:
+  /api/auth/sinup:
+    post:
+      summary: "Đăng ký tài khoản mới cho người dùng"
+      description: "API này dùng để người dùng đăng ký tài khoản khi đăng ký thành công sẽ có mail gửi về"
+      tags:
+        - AUTH
+      requestBody:
+        description: Thông tin đăng ký tài khoản
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: "string"
+                password:
+                  type: string
+                  example: "string"
+                email:
+                  type: string
+                  example: "string"
+                phone_number:
+                  type: string
+                  example: "string"
+                address:
+                  type: string
+                  example: "string"
+      responses:
+        "201":
+          description: "lấy danh sách người dùng thành công"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Đăng ký tài khoản thành công"
+                      data:
+                        type: object
+                        properties:
+                          user_id:
+                            type: string
+                            example: "string"
+                          username:
+                            type: string
+                            example: "string"
+                          email:
+                            type: string
+                            example: "string"
+                          phone_number:
+                            type: string
+                            example: "string"
+                          address:
+                            type: string
+                            example: "string"
+                          role:
+                            type: string
+                            example: "string"
+                          avatar_url:
+                            type: string
+                            example: "string"
+                  statusCode:
+                    type: number
+                    example: 201
+                  dateTime:
+                    type: string
+                    format: date-time
+                    example: "2022-01-01T12:00:00Z"
+        "409":
+          description: "Email đã tồn tại"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Email đã tồn tại"
+                  statusCode:
+                    type: number
+                    example: 409
+                  dateTime:
+                    type: string
+                    format: date-time
+                    example: "2022-01-01T12:00:00Z"
