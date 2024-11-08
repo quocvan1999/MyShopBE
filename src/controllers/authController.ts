@@ -1711,6 +1711,111 @@ export const sendCodeVerifyEmail = async (
   });
 };
 
+/**
+ * @swagger
+ * /api/auth/verify-email:
+ *   post:
+ *     summary: Verify email
+ *     description: API này dùng để xác thực email người dùng
+ *     tags:
+ *       - AUTH
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 description: Địa chỉ email của người dùng
+ *                 example: user@example.com
+ *               code:
+ *                 type: string
+ *                 description: Mã xác thực được gửi đến email
+ *                 example: "123456"
+ *     responses:
+ *       200:
+ *         description: Xác thực email thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Xác thực email thành công"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 200
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       400:
+ *         description: Mã xác thực không chính xác
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mã xác thực không chính xác"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 400
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       401:
+ *         description: Mã xác thực hết hạn
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Mã xác thực hết hạn"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 401
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ *       404:
+ *         description: Email không tồn tại
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 content:
+ *                   type: object
+ *                   properties:
+ *                     message:
+ *                       type: string
+ *                       example: "Email không tồn tại"
+ *                 statusCode:
+ *                   type: number
+ *                   example: 404
+ *                 dateTime:
+ *                   type: string
+ *                   format: date-time
+ *                   example: "2022-01-01T12:00:00Z"
+ */
 export const verifyEmail = async (
   req: Request,
   res: Response
@@ -1724,11 +1829,11 @@ export const verifyEmail = async (
   });
 
   if (!checkEmail) {
-    res.status(400).json({
+    res.status(404).json({
       content: {
         message: "Email không tồn tại",
       },
-      statusCode: 400,
+      statusCode: 404,
       dateTime: getVietnamTime(),
     });
     return;
@@ -1769,9 +1874,9 @@ export const verifyEmail = async (
   );
 
   if (!checkCodeDate) {
-    res.status(400).json({
+    res.status(401).json({
       content: { message: "Mã xác thực hết hạn" },
-      statusCode: 400,
+      statusCode: 401,
       dateTime: getVietnamTime(),
     });
 
